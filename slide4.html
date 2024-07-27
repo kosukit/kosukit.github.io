@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Prefecture Fertility Rates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        #container {
+            width: 100%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #chart {
+            margin: 20px 0;
+            width: 100%;
+            height: 600px;
+            position: relative;
+        }
+
+        .line {
+            fill: none;
+            stroke-width: 2px;
+            opacity: 0.3;
+        }
+
+        .nationwide-line {
+            fill: none;
+            stroke-width: 3px;
+            stroke: black;
+            filter: url(#glow);
+            opacity: 1;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .explanation {
+            margin-bottom: 20px;
+        }
+
+        #next-slide {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1876db;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        #next-slide:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Fertility Rate Over Time for Japanese Prefectures</h1>
+        <div class="explanation">
+            <p>This graph shows the total fertility rate for various Japanese prefectures over time. The graph shows the
+                rapid decline of birth rate over the years, with every prefecture falling well below what is normally
+                considered replacement level: a fertility level of 2.1. The nationwide average is highlighted in black
+                in the graph below for reference. From this data, we can tell that even just within the country, many of
+                the most urbanized prefectures such as Tokyo and Osaka have some of the lowest fertility rates, with
+                more rural prefectures such as Okinawa keeping it up.</p>
+        </div>
+        <div id="chart"></div>
+        <div id="tooltip" class="tooltip"></div>
+        <a id="next-slide" href="slide3.html">Go to the previous slide</a>
+        <a id="next-slide" href="index.html">End</a>
+    </div>
+    <script src='https://d3js.org/d3.v5.min.js'></script>
+    <script>
+        d3.csv('japanPrefRate.csv').then(function (data) {
+            const years = data.columns.slice(3);
+            const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+            const width = 1100 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            const defs = svg.append("defs");
+
+            const filter = defs.append("filter")
+                .attr("id", "glow");
+
+            filter.append("feGaussianBlur")
+                .attr("stdDeviation", "4")
+                .attr("result", "coloredBlur");
+
+            const feMerge = filter.append("feMerge");
+
+            feMerge.append("feMergeNode")
+                .attr("in", "coloredBlur");
+            feMerge.append("feMergeNode")
+                .attr("in", "SourceGraphic");
+
+            const xScale = d3.scaleLinear()
+                .domain([1960, 2022])
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, 2.5])
+                .range([height, 0]);
+
+            const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"));
+            const yAxis = d3.axisLeft(yScale);
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Fertility Rate");
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height + margin.bottom - 10)
+                .style("text-anchor", "middle")
+                .text("Year");
+            svg.append("line")
+                .attr("x1", 0)
+                .attr("y1", yScale(2.1))
+                .attr("x2", width)
+                .attr("y2", yScale(2.1))
+                .attr("stroke", "red")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+            svg.append("text")
+                .attr("x", width - 100)
+                .attr("y", yScale(2.1) - 10)
+                .attr("fill", "red")
+                .style("font-size", "12px")
+                .text("Replacement Level (2.1)");
+            const line = d3.line()
+                .x(d => xScale(d.year))
+                .y(d => yScale(d.rate));
+
+            const prefectures = data.map(d => d.PrefectureName);
+            const prefectureData = prefectures.map(prefecture => {
+                return {
+                    name: prefecture,
+                    values: years.map(year => ({
+                        year: +year,
+                        rate: +data.find(d => d.PrefectureName === prefecture)[year]
+                    }))
+                };
+            });
+
+            const nationwideData = prefectureData.find(d => d.name === 'Nationwide');
+            const otherData = prefectureData.filter(d => d.name !== 'Nationwide');
+
+            svg.selectAll(".line")
+                .data(otherData)
+                .enter().append("path")
+                .attr("class", "line")
+                .attr("d", d => line(d.values))
+                .style("stroke", (d, i) => colorScale(i))
+                .style("opacity", 0.3);
+            svg.append("path")
+                .datum(nationwideData.values)
+                .attr("class", "nationwide-line")
+                .attr("d", line)
+                .style("filter", "url(#glow)");
+
+            const tooltip = d3.select("#tooltip");
+
+            svg.selectAll(".line")
+                .on("mouseover", function (event, d) {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html(d.name)
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function () {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            svg.selectAll(".nationwide-line")
+                .on("mouseover", function (event) {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html('Nationwide')
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function () {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+        });
+    </script>
+</body>
+
+</html>
