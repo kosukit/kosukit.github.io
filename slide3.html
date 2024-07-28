@@ -92,7 +92,7 @@
         <h1>GDP per Capita vs Fertility Rate</h1>
         <div class="explanation">
             <p>This visualization shows the relationship between GDP per capita and fertility rates for different
-                multinational regions. Even at a larger scale, Asian countries generally have the lowest fertility
+                multinational regions. Even at a larger scale, Asian countries (highlighted in red) generally have the lowest fertility
                 rates, suggesting there may be something cultural causing the region to experience low birth rates more
                 so than anywhere else.</p>
         </div>
@@ -254,7 +254,7 @@
                 svg.selectAll(".line").remove();
                 const highlightCountries = ['EAS'];
                 const annotationOffsets = {
-                    'EAS': { x: 0, y: 50 }
+                    'EAS': { x: 0, y: 75 }
                 };
 
                 highlightCountries.forEach(countryCode => {
