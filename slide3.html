@@ -250,8 +250,36 @@
                     .attr("cx", d => xScale(d.gdp))
                     .attr("cy", d => yScale(d.fertility))
                     .attr("r", d => populationScale(d.population));
-                svg.selectAll(".annotation").remove();
+                    svg.selectAll(".annotation").remove();
                 svg.selectAll(".line").remove();
+                const highlightCountries = ['EAS'];
+                const annotationOffsets = {
+                    'EAS': { x: 0, y: 50 }
+                };
+
+                highlightCountries.forEach(countryCode => {
+                    svg.selectAll("circle")
+                        .filter(d => d.country === countryNames[countryCode])
+                        .each(function (d) {
+                            const circle = d3.select(this);
+                            const [cx, cy] = [xScale(d.gdp), yScale(d.fertility)];
+                            const offset = annotationOffsets[countryCode] || { x: 0, y: 0 };
+
+                            svg.append("text")
+                                .attr("class", "annotation")
+                                .attr("x", cx + offset.x)
+                                .attr("y", cy + offset.y)
+                                .text(countryNames[countryCode])
+                                .attr("fill", "blue");
+
+                            svg.append("line")
+                                .attr("class", "line")
+                                .attr("x1", cx)
+                                .attr("y1", cy)
+                                .attr("x2", cx + offset.x)
+                                .attr("y2", cy + offset.y);
+                        });
+                });
             }
 
             // Slider event
