@@ -201,7 +201,8 @@
                             region: regions[country],
                             gdp: +gdp[country][year],
                             fertility: +fertility[country][year],
-                            population: population[country]
+                            population: population[country],
+                            isHighlighted: ['EAS'].includes(country)
                         });
                     }
                 }
@@ -212,10 +213,12 @@
                 circles.exit().remove();
 
                 circles.enter().append("circle")
+                    .attr("class", d => d.isHighlighted ? "circle highlighted" : "circle")
                     .attr("class", "circle")
                     .attr("cx", d => xScale(d.gdp))
                     .attr("cy", d => yScale(d.fertility))
                     .attr("r", d => populationScale(d.population))
+                    .style("fill", d => d.isHighlighted ? "rgba(255, 0, 0, 0.5)" : colorScale(d.region))
                     .on("mouseover", function (event, d) {
                         d3.select("#tooltip")
                             .style("opacity", 1)
